@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.43.186:5000/api';
+const BASE_URL = 'https://luct-reporting-backend-tdyh.onrender.com/api';
 
 // Helper to get token
 const getToken = async () => {
