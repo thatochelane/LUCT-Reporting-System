@@ -20,7 +20,8 @@ const RegisterScreen = ({ navigation, onLogin }) => {
   const roles = [
     { label: 'Student', value: 'student' },
     { label: 'Lecturer', value: 'lecturer' },
-    { label: 'Principal Lecturer', value: 'prl' },
+    { label: 'Principal', value: 'prl' },
+    { label: 'Leader', value: 'pl'},
   ];
 
   const handleRegister = async () => {
@@ -336,11 +337,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   roleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 8,
-  },
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  marginBottom: 20,
+  gap: 8,
+},
+roleButton: {
+  width: '47%',
+  paddingVertical: 8,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: '#6c3de0',
+  alignItems: 'center',
+},
   roleButton: {
     flex: 1,
     paddingVertical: 8,

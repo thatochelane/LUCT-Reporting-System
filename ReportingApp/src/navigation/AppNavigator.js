@@ -33,6 +33,15 @@ import PRLMonitoringScreen from '../screens/prl/MonitoringScreen';
 import PRLRatingScreen from '../screens/prl/RatingScreen';
 import PRLClassesScreen from '../screens/prl/ClassesScreen';
 
+// PL Screens
+import PLDashboard from '../screens/pl/PLDashboard';
+import PLCoursesScreen from '../screens/pl/CoursesScreen';
+import PLReportsScreen from '../screens/pl/ReportsScreen';
+import PLMonitoringScreen from '../screens/pl/MonitoringScreen';
+import PLClassesScreen from '../screens/pl/ClassesScreen';
+import PLLecturesScreen from '../screens/pl/LecturesScreen';
+import PLRatingScreen from '../screens/pl/RatingScreen';
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -47,6 +56,7 @@ const TabIcon = ({ label, focused }) => {
     Reports: 'document-text',
     Students: 'people',
     Courses: 'school',
+    Lectures: 'person',
   };
 
   return (
@@ -193,6 +203,60 @@ const PRLTabs = ({ user, onLogout }) => (
   </Tab.Navigator>
 );
 
+// PL Tabs
+const PLTabs = ({ user, onLogout }) => (
+  <Tab.Navigator
+    screenOptions={{
+      headerShown: false,
+      tabBarStyle: styles.tabBar,
+      tabBarShowLabel: false,
+    }}
+  >
+    <Tab.Screen
+      name="Home"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} /> }}
+    >
+      {({ navigation }) => <PLDashboard user={user} onLogout={onLogout} navigation={navigation} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Courses"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Courses" focused={focused} /> }}
+    >
+      {() => <PLCoursesScreen user={user} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Reports"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Reports" focused={focused} /> }}
+    >
+      {() => <PLReportsScreen user={user} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Monitoring"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Monitoring" focused={focused} /> }}
+    >
+      {() => <PLMonitoringScreen user={user} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Classes"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Classes" focused={focused} /> }}
+    >
+      {() => <PLClassesScreen user={user} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Lectures"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Lectures" focused={focused} /> }}
+    >
+      {() => <PLLecturesScreen user={user} />}
+    </Tab.Screen>
+    <Tab.Screen
+      name="Rating"
+      options={{ tabBarIcon: ({ focused }) => <TabIcon label="Rating" focused={focused} /> }}
+    >
+      {() => <PLRatingScreen user={user} />}
+    </Tab.Screen>
+  </Tab.Navigator>
+);
+
 // AUTH STACK
 const AuthStack = ({ onLogin }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -251,6 +315,7 @@ const AppNavigator = () => {
     if (user.role === 'student') return <StudentTabs user={user} onLogout={handleLogout} />;
     if (user.role === 'lecturer') return <LecturerTabs user={user} onLogout={handleLogout} />;
     if (user.role === 'prl') return <PRLTabs user={user} onLogout={handleLogout} />;
+    if (user.role === 'pl') return <PLTabs user={user} onLogout={handleLogout} />;
     return <AuthStack onLogin={handleLogin} />;
   };
 

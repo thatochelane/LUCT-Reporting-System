@@ -7,7 +7,7 @@ const register = async (req, res) => {
     const { email, password, name, role, facultyName, studentId } = req.body;
 
     // Validate role
-    const allowedRoles = ['student', 'lecturer', 'prl'];
+    const allowedRoles = ['student', 'lecturer', 'prl', 'pl'];
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
