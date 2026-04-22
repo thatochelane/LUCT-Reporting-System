@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllCourses, createCourse, assignLecturer, deleteCourse } from '../../api/index';
+import { getAllCourses, createCourse, assignLecturer, deleteCourse, getAllReports } from '../../api/index';
 
 const PLCoursesScreen = ({ user }) => {
   const [courses, setCourses] = useState([]);
@@ -43,11 +33,46 @@ const PLCoursesScreen = ({ user }) => {
 
   const fetchCourses = async () => {
     try {
-      const response = await getAllCourses(search);
-      if (response.courses) {
-        setCourses(response.courses);
-        setFiltered(response.courses);
+      const [coursesRes, reportsRes] = await Promise.all([
+        getAllCourses(),
+        getAllReports(),
+      ]);
+
+      const allCoursesMap = {};
+
+      // Add courses from reports first
+      if (reportsRes.reports) {
+        reportsRes.reports.forEach(r => {
+          if (!allCoursesMap[r.courseCode]) {
+            allCoursesMap[r.courseCode] = {
+              id: r.courseCode,
+              courseCode: r.courseCode,
+              courseName: r.courseName,
+              facultyName: r.facultyName,
+              lecturerName: r.lecturerName,
+              lecturerUid: r.lecturerUid,
+              className: r.className,
+              semester: '',
+              year: '',
+              fromReports: true,
+            };
+          }
+        });
       }
+
+      // Add/override with courses from courses collection
+      if (coursesRes.courses) {
+        coursesRes.courses.forEach(c => {
+          allCoursesMap[c.courseCode] = {
+            ...c,
+            fromReports: false,
+          };
+        });
+      }
+
+      const list = Object.values(allCoursesMap);
+      setCourses(list);
+      setFiltered(list);
     } catch (error) {
       console.log('Error fetching courses:', error);
     } finally {
@@ -278,47 +303,54 @@ const PLCoursesScreen = ({ user }) => {
       <Modal visible={addModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add New Course</Text>
-
-            {[
-              { label: 'Course Name *', value: courseName, setter: setCourseName, placeholder: 'e.g. Mobile Programming' },
-              { label: 'Course Code *', value: courseCode, setter: setCourseCode, placeholder: 'e.g. CSC3214' },
-              { label: 'Faculty Name *', value: facultyName, setter: setFacultyName, placeholder: 'e.g. Faculty of ICT' },
-              { label: 'Class Name', value: className, setter: setClassName, placeholder: 'e.g. BSCSM Y3S2' },
-              { label: 'Semester', value: semester, setter: setSemester, placeholder: 'e.g. 2' },
-              { label: 'Year', value: year, setter: setYear, placeholder: 'e.g. 2024' },
-            ].map((field, index) => (
-              <View key={index} style={styles.inputWrapper}>
-                <Text style={styles.inputLabel}>{field.label}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={field.value}
-                  onChangeText={field.setter}
-                  placeholder={field.placeholder}
-                  placeholderTextColor="#555"
-                />
-              </View>
-            ))}
-
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setAddModalVisible(false)}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleAddCourse}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Add Course</Text>
-                )}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Course</Text>
+              <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+                <Ionicons name="close-outline" size={24} color="#a78bfa" />
               </TouchableOpacity>
             </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {[
+                { label: 'Course Name *', value: courseName, setter: setCourseName, placeholder: 'e.g. Mobile Programming' },
+                { label: 'Course Code *', value: courseCode, setter: setCourseCode, placeholder: 'e.g. CSC3214' },
+                { label: 'Faculty Name *', value: facultyName, setter: setFacultyName, placeholder: 'e.g. Faculty of ICT' },
+                { label: 'Class Name', value: className, setter: setClassName, placeholder: 'e.g. BSCSM Y3S2' },
+                { label: 'Semester', value: semester, setter: setSemester, placeholder: 'e.g. 2' },
+                { label: 'Year', value: year, setter: setYear, placeholder: 'e.g. 2024' },
+              ].map((field, index) => (
+                <View key={index} style={styles.inputWrapper}>
+                  <Text style={styles.inputLabel}>{field.label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={field.value}
+                    onChangeText={field.setter}
+                    placeholder={field.placeholder}
+                    placeholderTextColor="#555"
+                  />
+                </View>
+              ))}
+
+              <View style={styles.modalBtns}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setAddModalVisible(false)}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  onPress={handleAddCourse}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Add Course</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -329,6 +361,8 @@ const PLCoursesScreen = ({ user }) => {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Assign Lecturer</Text>
             <Text style={styles.modalSubtitle}>{selectedCourse?.courseName}</Text>
+
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Lecturer Name</Text>
@@ -374,6 +408,7 @@ const PLCoursesScreen = ({ user }) => {
                 )}
               </TouchableOpacity>
             </View>
+           </ScrollView>
           </View>
         </View>
       </Modal>
@@ -515,6 +550,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   modalCard: {
     backgroundColor: '#12022e',

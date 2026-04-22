@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllReports, getAllRatings } from '../../api/index';
+import { getAllReports, getAllRatings, getAllCourses } from '../../api/index';
 
 const { width } = Dimensions.get('window');
 
@@ -20,15 +20,25 @@ const PLDashboard = ({ user, onLogout, navigation }) => {
 
   const fetchStats = async () => {
     try {
+      // Try new courses collection first
+      const coursesRes = await getAllCourses();
+      if (coursesRes.courses) {
+        setTotalCourses(coursesRes.courses.length);
+      }
+
       const reportsRes = await getAllReports();
       if (reportsRes.reports) {
         const reports = reportsRes.reports;
         setTotalReports(reports.length);
         const uniqueLecturers = [...new Set(reports.map(r => r.lecturerUid))];
         setTotalLecturers(uniqueLecturers.length);
-        const uniqueCourses = [...new Set(reports.map(r => r.courseCode))];
-        setTotalCourses(uniqueCourses.length);
         setRecentReports(reports.slice(0, 3));
+
+        // If no courses in collection use reports
+        if (!coursesRes.courses || coursesRes.courses.length === 0) {
+          const uniqueCourses = [...new Set(reports.map(r => r.courseCode))];
+          setTotalCourses(uniqueCourses.length);
+        }
       }
 
       const ratingsRes = await getAllRatings();
