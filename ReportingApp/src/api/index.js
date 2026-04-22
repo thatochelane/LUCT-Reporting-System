@@ -207,6 +207,45 @@ export const getMySubmittedRatings = async (search = '') => {
   return response.json();
 };
 
+// COURSES
+export const createCourse = async (data) => {
+  const headers = await getHeaders();
+  const response = await fetch(`${BASE_URL}/courses`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+  return response.json();
+};
+
+export const getAllCourses = async (search = '') => {
+  const headers = await getHeaders();
+  const response = await fetch(
+    `${BASE_URL}/courses?search=${search}`,
+    { method: 'GET', headers }
+  );
+  return response.json();
+};
+
+export const assignLecturer = async (id, data) => {
+  const headers = await getHeaders();
+  const response = await fetch(`${BASE_URL}/courses/${id}/assign`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+  });
+  return response.json();
+};
+
+export const deleteCourse = async (id) => {
+  const headers = await getHeaders();
+  const response = await fetch(`${BASE_URL}/courses/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  return response.json();
+};
+
 // NOTIFICATIONS
 export const getMyNotifications = async () => {
   const headers = await getHeaders();

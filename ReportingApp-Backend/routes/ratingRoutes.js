@@ -51,7 +51,7 @@ router.get('/my-ratings', verifyToken, verifyRole('lecturer'), getMyRatings);
 router.get('/lecturer/:lecturerUid', verifyToken, getLecturerRatings);
 
 // PRL routes
-router.get('/', verifyToken, verifyRole('prl'), getAllRatings);
+router.get('/', verifyToken, verifyRole('prl', 'pl'), getAllRatings);
 
 // Shared
 router.delete('/:id', verifyToken, verifyRole('student', 'prl'), deleteRating);

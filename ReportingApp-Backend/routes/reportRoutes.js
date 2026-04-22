@@ -21,7 +21,7 @@ router.delete('/:id', verifyToken, verifyRole('lecturer', 'prl'), deleteReport);
 router.get('/:id', verifyToken, getReportById);
 
 // PRL routes
-router.get('/', verifyToken, verifyRole('prl'), getAllReports);
-router.put('/:id/feedback', verifyToken, verifyRole('prl'), addFeedback);
+router.get('/', verifyToken, verifyRole('prl', 'pl'), getAllReports);
+router.put('/:id/feedback', verifyToken, verifyRole('prl', 'pl'), addFeedback);
 
 module.exports = router;

@@ -20,6 +20,6 @@ router.put('/:id', verifyToken, verifyRole('lecturer'), updateAttendance);
 router.delete('/:id', verifyToken, verifyRole('lecturer', 'prl'), deleteAttendance);
 
 // PRL routes
-router.get('/', verifyToken, verifyRole('prl'), getAllAttendance);
+router.get('/', verifyToken, verifyRole('prl', 'pl'), getAllAttendance);
 
 module.exports = router;

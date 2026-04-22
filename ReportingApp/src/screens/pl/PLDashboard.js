@@ -62,7 +62,7 @@ const PLDashboard = ({ user, onLogout, navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Welcome back 👋</Text>
+            <Text style={styles.greeting}>Welcome back</Text>
             <Text style={styles.userName}>{user?.name || 'Program Leader'}</Text>
             <Text style={styles.userRole}>Program Leader · {user?.facultyName || 'LUCT'}</Text>
           </View>

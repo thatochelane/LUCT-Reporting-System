@@ -8,6 +8,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const coursesRoutes = require('./routes/coursesRoutes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/courses', coursesRoutes);
 //app.use('/api/notifications', notificationRoutes);
 
 // Health check
