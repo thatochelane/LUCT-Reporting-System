@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity, Alert, Modal, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllCourses, createCourse, assignLecturer, deleteCourse, getAllReports } from '../../api/index';
@@ -156,26 +156,32 @@ const PLCoursesScreen = ({ user }) => {
   };
 
   const handleDeleteCourse = async (id) => {
-    Alert.alert(
-      'Delete Course',
-      'Are you sure you want to delete this course?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCourse(id);
-              fetchCourses();
-            } catch (error) {
+  Alert.alert(
+    'Delete Course',
+    'Are you sure you want to delete this course?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const response = await deleteCourse(id);
+            if (response.message === 'Course deleted successfully') {
+              // Remove from local state immediately
+              setCourses(prev => prev.filter(c => c.id !== id));
+              setFiltered(prev => prev.filter(c => c.id !== id));
+            } else {
               Alert.alert('Error', 'Failed to delete course');
             }
-          },
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete course');
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -301,116 +307,142 @@ const PLCoursesScreen = ({ user }) => {
 
       {/* Add Course Modal */}
       <Modal visible={addModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Course</Text>
-              <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                <Ionicons name="close-outline" size={24} color="#a78bfa" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              {[
-                { label: 'Course Name *', value: courseName, setter: setCourseName, placeholder: 'e.g. Mobile Programming' },
-                { label: 'Course Code *', value: courseCode, setter: setCourseCode, placeholder: 'e.g. CSC3214' },
-                { label: 'Faculty Name *', value: facultyName, setter: setFacultyName, placeholder: 'e.g. Faculty of ICT' },
-                { label: 'Class Name', value: className, setter: setClassName, placeholder: 'e.g. BSCSM Y3S2' },
-                { label: 'Semester', value: semester, setter: setSemester, placeholder: 'e.g. 2' },
-                { label: 'Year', value: year, setter: setYear, placeholder: 'e.g. 2024' },
-              ].map((field, index) => (
-                <View key={index} style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>{field.label}</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={field.value}
-                    onChangeText={field.setter}
-                    placeholder={field.placeholder}
-                    placeholderTextColor="#555"
-                  />
-                </View>
-              ))}
-
-              <View style={styles.modalBtns}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => setAddModalVisible(false)}
-                >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  onPress={handleAddCourse}
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.submitBtnText}>Add Course</Text>
-                  )}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add New Course</Text>
+                <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+                  <Ionicons name="close-outline" size={24} color="#a78bfa" />
                 </TouchableOpacity>
               </View>
-            </ScrollView>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                {[
+                  { label: 'Course Name *', value: courseName, setter: setCourseName, placeholder: 'e.g. Mobile Programming' },
+                  { label: 'Course Code *', value: courseCode, setter: setCourseCode, placeholder: 'e.g. CSC3214' },
+                  { label: 'Faculty Name *', value: facultyName, setter: setFacultyName, placeholder: 'e.g. Faculty of ICT' },
+                  { label: 'Class Name', value: className, setter: setClassName, placeholder: 'e.g. BSCSM Y3S2' },
+                  { label: 'Semester', value: semester, setter: setSemester, placeholder: 'e.g. 2' },
+                  { label: 'Year', value: year, setter: setYear, placeholder: 'e.g. 2024' },
+                ].map((field, index) => (
+                  <View key={index} style={styles.inputWrapper}>
+                    <Text style={styles.inputLabel}>{field.label}</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={field.value}
+                      onChangeText={field.setter}
+                      placeholder={field.placeholder}
+                      placeholderTextColor="#555"
+                    />
+                  </View>
+                ))}
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={() => setAddModalVisible(false)}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.submitBtn}
+                    onPress={handleAddCourse}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.submitBtnText}>Add Course</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Assign Lecturer Modal */}
       <Modal visible={assignModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Assign Lecturer</Text>
-            <Text style={styles.modalSubtitle}>{selectedCourse?.courseName}</Text>
-
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Lecturer Name</Text>
-              <TextInput
-                style={styles.input}
-                value={lecturerName}
-                onChangeText={setLecturerName}
-                placeholder="Full name"
-                placeholderTextColor="#555"
-              />
-            </View>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Lecturer UID</Text>
-              <TextInput
-                style={styles.input}
-                value={lecturerUid}
-                onChangeText={setLecturerUid}
-                placeholder="Firebase UID of lecturer"
-                placeholderTextColor="#555"
-              />
-            </View>
-
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => {
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Assign Lecturer</Text>
+                  <Text style={styles.modalSubtitle}>{selectedCourse?.courseName}</Text>
+                </View>
+                <TouchableOpacity onPress={() => {
                   setAssignModalVisible(false);
                   setLecturerName('');
                   setLecturerUid('');
-                }}
+                }}>
+                  <Ionicons name="close-outline" size={24} color="#a78bfa" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: 20 }}
               >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleAssignLecturer}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Assign</Text>
-                )}
-              </TouchableOpacity>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputLabel}>Lecturer Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={lecturerName}
+                    onChangeText={setLecturerName}
+                    placeholder="Full name"
+                    placeholderTextColor="#555"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputLabel}>Lecturer UID</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={lecturerUid}
+                    onChangeText={setLecturerUid}
+                    placeholder="Firebase UID of lecturer"
+                    placeholderTextColor="#555"
+                  />
+                </View>
+
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={() => {
+                      setAssignModalVisible(false);
+                      setLecturerName('');
+                      setLecturerUid('');
+                    }}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.submitBtn}
+                    onPress={handleAssignLecturer}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.submitBtnText}>Assign</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
-           </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -554,7 +586,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   modalCard: {
@@ -564,7 +596,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: '#6c3de0',
-    maxHeight: '85%',
+    maxHeight: '90%',
   },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 4 },
   modalSubtitle: { fontSize: 13, color: '#a78bfa', marginBottom: 16 },
