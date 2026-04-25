@@ -155,34 +155,39 @@ const PLCoursesScreen = ({ user }) => {
     }
   };
 
-  const handleDeleteCourse = async (id) => {
-  Alert.alert(
-    'Delete Course',
-    'Are you sure you want to delete this course?',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const response = await deleteCourse(id);
-            if (response.message === 'Course deleted successfully') {
-              // Remove from local state immediately
-              setCourses(prev => prev.filter(c => c.id !== id));
-              setFiltered(prev => prev.filter(c => c.id !== id));
-            } else {
+  const handleDeleteCourse = async (course) => {
+    Alert.alert(
+      'Delete Course',
+      'Are you sure you want to delete this course?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (course.fromReports) {
+                // Can't delete courses from reports
+                // Just remove from local state
+                setCourses(prev => prev.filter(c => c.courseCode !== course.courseCode));
+                setFiltered(prev => prev.filter(c => c.courseCode !== course.courseCode));
+                return;
+              }
+              const response = await deleteCourse(course.id);
+              if (response.message === 'Course deleted successfully') {
+                setCourses(prev => prev.filter(c => c.id !== course.id));
+                setFiltered(prev => prev.filter(c => c.id !== course.id));
+              } else {
+                Alert.alert('Error', 'Failed to delete course');
+              }
+            } catch (error) {
               Alert.alert('Error', 'Failed to delete course');
             }
-          } catch (error) {
-            Alert.alert('Error', 'Failed to delete course');
-          }
+          },
         },
-      },
-    ]
-  );
-};
-
+      ]
+    );
+  };
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -262,7 +267,7 @@ const PLCoursesScreen = ({ user }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteBtn}
-                    onPress={() => handleDeleteCourse(course.id)}
+                    onPress={() => handleDeleteCourse(course)}
                   >
                     <Ionicons name="trash-outline" size={16} color="#dc2626" />
                   </TouchableOpacity>
@@ -307,11 +312,11 @@ const PLCoursesScreen = ({ user }) => {
 
       {/* Add Course Modal */}
       <Modal visible={addModalVisible} transparent animationType="slide">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboard}
+          >
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Course</Text>
@@ -322,7 +327,7 @@ const PLCoursesScreen = ({ user }) => {
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingBottom: 20 }}
+                bounces={false}
               >
                 {[
                   { label: 'Course Name *', value: courseName, setter: setCourseName, placeholder: 'e.g. Mobile Programming' },
@@ -362,12 +367,12 @@ const PLCoursesScreen = ({ user }) => {
                     )}
                   </TouchableOpacity>
                 </View>
+                <View style={{ height: 30 }} />
               </ScrollView>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
-
       {/* Assign Lecturer Modal */}
       <Modal visible={assignModalVisible} transparent animationType="slide">
         <KeyboardAvoidingView
@@ -579,10 +584,13 @@ const styles = StyleSheet.create({
   },
   unassignedText: { fontSize: 12, color: '#d97806', fontWeight: '600' },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
+  flex: 1,
+  justifyContent: 'flex-end',
   },
+  modalKeyboard: {
+  width: '100%',
+  justifyContent: 'flex-end',
+},
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -590,14 +598,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalCard: {
-    backgroundColor: '#12022e',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#6c3de0',
-    maxHeight: '90%',
-  },
+  backgroundColor: '#12022e',
+  borderTopLeftRadius: 24,
+  borderTopRightRadius: 24,
+  paddingHorizontal: 24,
+  paddingTop: 20,
+  borderWidth: 1,
+  borderColor: '#6c3de0',
+  maxHeight: '95%',
+},
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 4 },
   modalSubtitle: { fontSize: 13, color: '#a78bfa', marginBottom: 16 },
   inputWrapper: { marginBottom: 12 },
