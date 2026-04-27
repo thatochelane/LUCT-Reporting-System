@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createReport } from '../../api/index';
@@ -97,9 +97,18 @@ const ReportFormScreen = ({ user }) => {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+return (
+  <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 8 }}
+      >
 
         {/* Header */}
         <View style={styles.header}>
@@ -107,7 +116,7 @@ const ReportFormScreen = ({ user }) => {
           <Text style={styles.headerTitle}>Lecture Report</Text>
         </View>
 
-        <Text style={styles.subtitle}>Fill in all fields to submit your lecture report</Text>
+        <Text style={styles.subtitle}></Text>
 
         {/* Form Card */}
         <View style={styles.card}>
@@ -233,7 +242,8 @@ const ReportFormScreen = ({ user }) => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 };
 

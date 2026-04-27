@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { markAttendance } from '../../api/index';
@@ -56,7 +56,16 @@ const StudentAttendanceScreen = ({ user }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 8 }}
+        >
 
         <View style={styles.header}>
           <Ionicons name="people-outline" size={24} color="#a78bfa" />
@@ -135,6 +144,7 @@ const StudentAttendanceScreen = ({ user }) => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+     </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
