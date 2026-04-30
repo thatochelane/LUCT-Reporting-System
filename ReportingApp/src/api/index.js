@@ -236,6 +236,14 @@ export const getAllCourses = async (search = '') => {
   return response.json();
 };
 
+export const getMyCourses = async (search = '') => {
+  const headers = await getHeaders();
+  const response = await fetch(
+    `${BASE_URL}/courses/my-courses?search=${search}`,
+    { method: 'GET', headers }
+  );
+  return response.json();
+};
 export const assignLecturer = async (id, data) => {
   const headers = await getHeaders();
   const response = await fetch(`${BASE_URL}/courses/${id}/assign`, {
