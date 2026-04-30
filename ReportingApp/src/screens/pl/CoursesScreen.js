@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity, Alert, Modal, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllCourses, createCourse, assignLecturer, deleteCourse, getAllReports } from '../../api/index';
+import { getAllCourses, createCourse, assignLecturer, deleteCourse, getAllReports, getLecturers } from '../../api/index';
 
 const PLCoursesScreen = ({ user }) => {
   const [courses, setCourses] = useState([]);
@@ -14,6 +14,8 @@ const PLCoursesScreen = ({ user }) => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [lecturers, setLecturers] = useState([]);
+  const [loadingLecturers, setLoadingLecturers] = useState(false);
 
   // Add course form
   const [courseName, setCourseName] = useState('');
@@ -155,6 +157,20 @@ const PLCoursesScreen = ({ user }) => {
     }
   };
 
+  const fetchLecturers = async () => {
+    setLoadingLecturers(true);
+    try {
+      const response = await getLecturers();
+      if (response.lecturers) {
+        setLecturers(response.lecturers);
+      }
+    } catch (error) {
+      console.log('Error fetching lecturers:', error);
+    } finally {
+      setLoadingLecturers(false);
+    }
+  };
+
   const handleDeleteCourse = async (course) => {
     Alert.alert(
       'Delete Course',
@@ -260,6 +276,7 @@ const PLCoursesScreen = ({ user }) => {
                     style={styles.assignBtn}
                     onPress={() => {
                       setSelectedCourse(course);
+                      fetchLecturers();
                       setAssignModalVisible(true);
                     }}
                   >
@@ -375,11 +392,11 @@ const PLCoursesScreen = ({ user }) => {
       </Modal>
       {/* Assign Lecturer Modal */}
       <Modal visible={assignModalVisible} transparent animationType="slide">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboard}
+          >
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <View>
@@ -395,59 +412,81 @@ const PLCoursesScreen = ({ user }) => {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingBottom: 20 }}
-              >
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>Lecturer Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={lecturerName}
-                    onChangeText={setLecturerName}
-                    placeholder="Full name"
-                    placeholderTextColor="#555"
-                  />
+              {loadingLecturers ? (
+                <ActivityIndicator color="#a78bfa" size="large" style={{ marginVertical: 20 }} />
+              ) : lecturers.length === 0 ? (
+                <View style={styles.emptyLecturers}>
+                  <Ionicons name="people-outline" size={32} color="#444" />
+                  <Text style={styles.emptyLecturersText}>No lecturers found</Text>
                 </View>
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>Lecturer UID</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={lecturerUid}
-                    onChangeText={setLecturerUid}
-                    placeholder="Firebase UID of lecturer"
-                    placeholderTextColor="#555"
-                  />
-                </View>
+              ) : (
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                >
+                  <Text style={styles.selectLabel}>Select a lecturer:</Text>
+                  {lecturers.map((lecturer, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.lecturerItem,
+                        lecturerUid === lecturer.uid && styles.lecturerItemActive,
+                      ]}
+                      onPress={() => {
+                        setLecturerName(lecturer.name);
+                        setLecturerUid(lecturer.uid);
+                      }}
+                    >
+                      <View style={styles.lecturerItemLeft}>
+                        <View style={styles.lecturerAvatar}>
+                          <Text style={styles.lecturerAvatarText}>
+                            {lecturer.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={styles.lecturerItemName}>{lecturer.name}</Text>
+                          <Text style={styles.lecturerItemEmail}>{lecturer.email}</Text>
+                          <Text style={styles.lecturerItemFaculty}>{lecturer.facultyName}</Text>
+                        </View>
+                      </View>
+                      {lecturerUid === lecturer.uid && (
+                        <Ionicons name="checkmark-circle" size={22} color="#6c3de0" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
 
-                <View style={styles.modalBtns}>
-                  <TouchableOpacity
-                    style={styles.cancelBtn}
-                    onPress={() => {
-                      setAssignModalVisible(false);
-                      setLecturerName('');
-                      setLecturerUid('');
-                    }}
-                  >
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    onPress={handleAssignLecturer}
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.submitBtnText}>Assign</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
+                  <View style={styles.modalBtns}>
+                    <TouchableOpacity
+                      style={styles.cancelBtn}
+                      onPress={() => {
+                        setAssignModalVisible(false);
+                        setLecturerName('');
+                        setLecturerUid('');
+                      }}
+                    >
+                      <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.submitBtn,
+                        !lecturerUid && { opacity: 0.5 }
+                      ]}
+                      onPress={handleAssignLecturer}
+                      disabled={submitting || !lecturerUid}
+                    >
+                      {submitting ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.submitBtnText}>Assign</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              )}
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -639,6 +678,70 @@ const styles = StyleSheet.create({
   },
   submitBtnText: { color: '#fff', fontWeight: '700' },
   bottomSpacing: { height: 30 },
+  emptyLecturers: {
+  alignItems: 'center',
+  padding: 30,
+  gap: 10,
+},
+emptyLecturersText: {
+  color: '#666',
+  fontSize: 14,
+},
+selectLabel: {
+  fontSize: 13,
+  color: '#a78bfa',
+  fontWeight: '600',
+  marginBottom: 12,
+},
+lecturerItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: '#1a0533',
+  borderRadius: 12,
+  padding: 12,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: '#6c3de033',
+},
+lecturerItemActive: {
+  borderColor: '#6c3de0',
+  backgroundColor: '#6c3de011',
+},
+lecturerItemLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+  flex: 1,
+},
+lecturerAvatar: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: '#6c3de0',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+lecturerAvatarText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#fff',
+},
+lecturerItemName: {
+  fontSize: 14,
+  fontWeight: '700',
+  color: '#fff',
+},
+lecturerItemEmail: {
+  fontSize: 11,
+  color: '#888',
+  marginTop: 1,
+},
+lecturerItemFaculty: {
+  fontSize: 11,
+  color: '#a78bfa',
+  marginTop: 1,
+},
 });
 
 export default PLCoursesScreen;

@@ -112,6 +112,15 @@ export const deleteReport = async (id) => {
   return response.json();
 };
 
+export const getLecturers = async () => {
+  const headers = await getHeaders();
+  const response = await fetch(`${BASE_URL}/auth/lecturers`, {
+    method: 'GET',
+    headers,
+  });
+  return response.json();
+};
+
 // ATTENDANCE
 export const markAttendance = async (data) => {
   const headers = await getHeaders();
