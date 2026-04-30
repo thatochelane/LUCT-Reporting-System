@@ -52,9 +52,16 @@ const PRLReportsScreen = ({ user }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
+  <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
           <Ionicons name="document-text-outline" size={24} color="#a78bfa" />
           <Text style={styles.headerTitle}>Lecture Reports</Text>
@@ -153,6 +160,7 @@ const PRLReportsScreen = ({ user }) => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+    </KeyboardAvoidingView>
 
       {/* Feedback Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
@@ -180,6 +188,7 @@ const PRLReportsScreen = ({ user }) => {
                 placeholderTextColor="#555"
                 multiline
                 numberOfLines={4}
+                autoFocus
               />
               <View style={styles.modalBtns}>
                 <TouchableOpacity
