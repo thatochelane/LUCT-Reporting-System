@@ -45,7 +45,7 @@ const LecturerDashboard = ({ user, onLogout, navigation }) => {
     { title: 'Attendance', icon: 'people-outline', subtitle: 'Manage student attendance', color: '#12022e', tab: 'Students' },
     { title: 'Monitoring', icon: 'stats-chart-outline', subtitle: 'Monitor your lectures', color: '#12022e', tab: 'Monitoring' },
     { title: 'My Ratings', icon: 'star-outline', subtitle: 'View student feedback', color: '#12022e', tab: 'Rating' },
-    { title: 'Notifications', icon: 'notifications-outline', subtitle: 'View announcements', color: '#12022e', tab: null },
+    { title: 'Home', icon: 'home-outline', subtitle: 'View announcements', color: '#12022e', tab: null },
   ];
 
   return (

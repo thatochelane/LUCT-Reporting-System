@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllReports, addFeedback } from '../../api/index';
@@ -157,34 +157,52 @@ const PRLReportsScreen = ({ user }) => {
       {/* Feedback Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add Feedback</Text>
-            <Text style={styles.modalSubtitle}>{selectedReport?.courseName}</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={feedback}
-              onChangeText={setFeedback}
-              placeholder="Write your feedback..."
-              placeholderTextColor="#555"
-              multiline
-              numberOfLines={4}
-            />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => { setModalVisible(false); setFeedback(''); }}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.submitBtn} onPress={handleFeedback} disabled={submitting}>
-                {submitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Submit</Text>
-                )}
-              </TouchableOpacity>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboard}
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Add Feedback</Text>
+                  <Text style={styles.modalSubtitle}>{selectedReport?.courseName}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => { setModalVisible(false); setFeedback(''); }}
+                >
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.modalInput}
+                value={feedback}
+                onChangeText={setFeedback}
+                placeholder="Write your feedback..."
+                placeholderTextColor="#555"
+                multiline
+                numberOfLines={4}
+              />
+              <View style={styles.modalBtns}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => { setModalVisible(false); setFeedback(''); }}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  onPress={handleFeedback}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Submit</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+              <View style={{ height: 20 }} />
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -264,16 +282,27 @@ const styles = StyleSheet.create({
   feedbackBtnText: { fontSize: 13, color: '#a78bfa', fontWeight: '600' },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
+  modalKeyboard: {
+  width: '100%',
+  justifyContent: 'flex-end',
+},
   modalCard: {
     backgroundColor: '#12022e',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 0,
     borderWidth: 1,
     borderColor: '#6c3de0',
+},
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16
   },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 4 },
   modalSubtitle: { fontSize: 13, color: '#a78bfa', marginBottom: 16 },

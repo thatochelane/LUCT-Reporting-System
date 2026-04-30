@@ -40,7 +40,7 @@ const PRLDashboard = ({ user, onLogout, navigation }) => {
     { title: 'Monitoring', icon: 'stats-chart-outline', subtitle: 'Monitor lectures', color: '#12022e', tab: 'Monitoring' },
     { title: 'Classes', icon: 'book-outline', subtitle: 'View all classes', color: '#12022e', tab: 'Classes' },
     { title: 'Ratings', icon: 'star-outline', subtitle: 'View all ratings', color: '#12022e', tab: 'Rating' },
-    { title: 'Notifications', icon: 'notifications-outline', subtitle: 'Send announcements', color: '#12022e', tab: null },
+    { title: 'Home', icon: 'home-outline', subtitle: 'Recents', color: '#12022e', tab: null },
   ];
 
   return (

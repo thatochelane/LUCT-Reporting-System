@@ -49,7 +49,7 @@ const StudentDashboard = ({ user, onLogout, navigation }) => {
     { title: 'My Attendance', icon: 'calendar-outline', subtitle: 'View your attendance records', color: '#12022e', tab: 'Attendance' },
     { title: 'Monitoring', icon: 'stats-chart-outline', subtitle: 'Track your progress', color: '#12022e', tab: 'Monitoring' },
     { title: 'Rate Lecturer', icon: 'star-outline', subtitle: 'Give feedback on lectures', color: '#12022e', tab: 'Rating' },
-    { title: 'Notifications', icon: 'notifications-outline', subtitle: 'View announcements', color: '#12022e', tab: null },
+    { title: 'Home', icon: 'home-outline', subtitle: 'Recents', color: '#12022e', tab: null },
   ];
 
   const getStatusColor = (status) => {
