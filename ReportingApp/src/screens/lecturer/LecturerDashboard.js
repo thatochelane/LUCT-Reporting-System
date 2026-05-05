@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getMyReports, getMyRatings } from '../../api/index';
+import { getMyReports, getMyRatings, getMyCourses } from '../../api/index';
 
 const { width } = Dimensions.get('window');
 
@@ -19,16 +19,33 @@ const LecturerDashboard = ({ user, onLogout, navigation }) => {
 
   const fetchStats = async () => {
     try {
-      const reportsRes = await getMyReports();
+      const [reportsRes, ratingsRes, coursesRes] = await Promise.all([
+        getMyReports(),
+        getMyRatings(),
+        getMyCourses(),
+      ]);
+
       if (reportsRes.reports) {
         const reports = reportsRes.reports;
         setTotalReports(reports.length);
-        const uniqueClasses = [...new Set(reports.map(r => r.className))];
-        setTotalClasses(uniqueClasses.length);
         setRecentReports(reports.slice(0, 3));
+
+        // Get classes from reports
+        const classesFromReports = new Set(reports.map(r => r.className));
+
+        // Get classes from assigned courses
+        const classesFromCourses = new Set();
+        if (coursesRes.courses) {
+          coursesRes.courses.forEach(c => {
+            if (c.className) classesFromCourses.add(c.className);
+          });
+        }
+
+        // Merge both sets
+        const allClasses = new Set([...classesFromReports, ...classesFromCourses]);
+        setTotalClasses(allClasses.size);
       }
 
-      const ratingsRes = await getMyRatings();
       if (ratingsRes.averageRating) {
         setAvgRating(ratingsRes.averageRating);
       }

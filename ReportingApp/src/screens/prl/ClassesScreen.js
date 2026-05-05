@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllReports } from '../../api/index';
+import { getAllReports, getAllCourses } from '../../api/index';
 
 const PRLClassesScreen = ({ user }) => {
   const [classes, setClasses] = useState([]);
@@ -16,11 +16,16 @@ const PRLClassesScreen = ({ user }) => {
 
   const fetchClasses = async () => {
     try {
-      const response = await getAllReports();
-      if (response.reports) {
-        // Build unique classes from reports
-        const classesMap = {};
-        response.reports.forEach(r => {
+      const [reportsRes, coursesRes] = await Promise.all([
+        getAllReports(),
+        getAllCourses(),
+      ]);
+
+      const classesMap = {};
+
+      // Add classes from reports
+      if (reportsRes.reports) {
+        reportsRes.reports.forEach(r => {
           if (!classesMap[r.className]) {
             classesMap[r.className] = {
               className: r.className,
@@ -37,16 +42,41 @@ const PRLClassesScreen = ({ user }) => {
           classesMap[r.className].totalStudents += Number(r.totalRegisteredStudents || 0);
           classesMap[r.className].totalPresent += Number(r.actualStudentsPresent || 0);
         });
-        const list = Object.values(classesMap).map(c => ({
-          ...c,
-          courseCount: c.courseCount.size,
-          avgAttendance: c.totalStudents > 0
-            ? Math.round((c.totalPresent / c.totalStudents) * 100)
-            : 0,
-        }));
-        setClasses(list);
-        setFiltered(list);
       }
+
+      // Add classes from PL added courses
+      if (coursesRes.courses) {
+        coursesRes.courses.forEach(c => {
+          if (c.className) {
+            if (!classesMap[c.className]) {
+              classesMap[c.className] = {
+                className: c.className,
+                facultyName: c.facultyName,
+                lecturerName: c.lecturerName || 'Not assigned',
+                courseCount: new Set(),
+                reportCount: 0,
+                totalStudents: 0,
+                totalPresent: 0,
+              };
+            }
+            classesMap[c.className].courseCount.add(c.courseCode);
+            if (c.lecturerName) {
+              classesMap[c.className].lecturerName = c.lecturerName;
+            }
+          }
+        });
+      }
+
+      const list = Object.values(classesMap).map(c => ({
+        ...c,
+        courseCount: c.courseCount.size,
+        avgAttendance: c.totalStudents > 0
+          ? Math.round((c.totalPresent / c.totalStudents) * 100)
+          : 0,
+      }));
+
+      setClasses(list);
+      setFiltered(list);
     } catch (error) {
       console.log('Error fetching classes:', error);
     } finally {

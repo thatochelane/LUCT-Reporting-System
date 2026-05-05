@@ -164,11 +164,11 @@ const PRLReportsScreen = ({ user }) => {
 
       {/* Feedback Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalKeyboard}
-          >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, justifyContent: 'flex-end' }}
+        >
+          <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <View>
@@ -178,6 +178,7 @@ const PRLReportsScreen = ({ user }) => {
                 <TouchableOpacity
                   onPress={() => { setModalVisible(false); setFeedback(''); }}
                 >
+                  <Ionicons name="close-outline" size={24} color="#a78bfa" />
                 </TouchableOpacity>
               </View>
               <TextInput
@@ -211,8 +212,8 @@ const PRLReportsScreen = ({ user }) => {
               </View>
               <View style={{ height: 20 }} />
             </View>
-          </KeyboardAvoidingView>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalKeyboard: {
+  flex: 1,  
   width: '100%',
   justifyContent: 'flex-end',
 },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllReports } from '../../api/index';
+import { getAllReports, getAllCourses } from '../../api/index';
 
 const PRLCoursesScreen = ({ user }) => {
   const [courses, setCourses] = useState([]);
@@ -16,11 +16,16 @@ const PRLCoursesScreen = ({ user }) => {
 
   const fetchCourses = async () => {
     try {
-      const response = await getAllReports();
-      if (response.reports) {
-        // Build unique courses from reports
-        const coursesMap = {};
-        response.reports.forEach(r => {
+      const [reportsRes, coursesRes] = await Promise.all([
+        getAllReports(),
+        getAllCourses(),
+      ]);
+
+      const coursesMap = {};
+
+      // Add courses from reports first
+      if (reportsRes.reports) {
+        reportsRes.reports.forEach(r => {
           if (!coursesMap[r.courseCode]) {
             coursesMap[r.courseCode] = {
               courseCode: r.courseCode,
@@ -28,14 +33,45 @@ const PRLCoursesScreen = ({ user }) => {
               facultyName: r.facultyName,
               lecturerName: r.lecturerName,
               reportCount: 0,
+              classes: new Set(),
             };
           }
           coursesMap[r.courseCode].reportCount++;
+          coursesMap[r.courseCode].classes.add(r.className);
         });
-        const list = Object.values(coursesMap);
-        setCourses(list);
-        setFiltered(list);
       }
+
+      // Add/override with courses added by PL
+      if (coursesRes.courses) {
+        coursesRes.courses.forEach(c => {
+          if (!coursesMap[c.courseCode]) {
+            coursesMap[c.courseCode] = {
+              courseCode: c.courseCode,
+              courseName: c.courseName,
+              facultyName: c.facultyName,
+              lecturerName: c.lecturerName || 'Not assigned',
+              reportCount: 0,
+              classes: new Set(),
+            };
+          } else {
+            // Update lecturer info if assigned
+            if (c.lecturerName) {
+              coursesMap[c.courseCode].lecturerName = c.lecturerName;
+            }
+          }
+          if (c.className) {
+            coursesMap[c.courseCode].classes.add(c.className);
+          }
+        });
+      }
+
+      const list = Object.values(coursesMap).map(c => ({
+        ...c,
+        classes: c.classes.size,
+      }));
+
+      setCourses(list);
+      setFiltered(list);
     } catch (error) {
       console.log('Error fetching courses:', error);
     } finally {
@@ -44,16 +80,17 @@ const PRLCoursesScreen = ({ user }) => {
   };
 
   const handleSearch = (text) => {
-    setSearch(text);
-    const searchLower = text.toLowerCase();
-    setFiltered(
-      courses.filter(c =>
-        c.courseName.toLowerCase().includes(searchLower) ||
-        c.courseCode.toLowerCase().includes(searchLower) ||
-        c.lecturerName.toLowerCase().includes(searchLower)
-      )
-    );
-  };
+  setSearch(text);
+  const searchLower = text.toLowerCase();
+  setFiltered(
+    courses.filter(c =>
+      c.courseName.toLowerCase().includes(searchLower) ||
+      c.courseCode.toLowerCase().includes(searchLower) ||
+      c.lecturerName.toLowerCase().includes(searchLower) ||
+      c.facultyName.toLowerCase().includes(searchLower)
+    )
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

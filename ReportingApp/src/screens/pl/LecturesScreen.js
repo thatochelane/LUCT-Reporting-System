@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllReports, getAllRatings } from '../../api/index';
+import { getAllReports, getAllRatings, getLecturers  } from '../../api/index';
 
 const PLLecturesScreen = ({ user }) => {
   const [lecturers, setLecturers] = useState([]);
@@ -18,17 +18,43 @@ const PLLecturesScreen = ({ user }) => {
 
   const fetchLecturers = async () => {
     try {
-      const reportsRes = await getAllReports();
-      const ratingsRes = await getAllRatings();
+      const [reportsRes, ratingsRes, lecturersRes] = await Promise.all([
+        getAllReports(),
+        getAllRatings(),
+        getLecturers(),
+      ]);
 
+      const lecturersMap = {};
+
+      // Add all lecturers from users collection first
+      if (lecturersRes.lecturers) {
+        lecturersRes.lecturers.forEach(l => {
+          lecturersMap[l.uid] = {
+            uid: l.uid,
+            name: l.name,
+            email: l.email,
+            facultyName: l.facultyName,
+            reportCount: 0,
+            reviewedCount: 0,
+            pendingCount: 0,
+            courses: new Set(),
+            classes: new Set(),
+            totalPresent: 0,
+            totalRegistered: 0,
+            ratings: [],
+          };
+        });
+      }
+
+      // Add report data to existing lecturers
       if (reportsRes.reports) {
-        const lecturersMap = {};
-
         reportsRes.reports.forEach(r => {
           if (!lecturersMap[r.lecturerUid]) {
+            // Add lecturer from reports if not in users collection
             lecturersMap[r.lecturerUid] = {
               uid: r.lecturerUid,
               name: r.lecturerName,
+              email: '',
               facultyName: r.facultyName,
               reportCount: 0,
               reviewedCount: 0,
@@ -51,32 +77,32 @@ const PLLecturesScreen = ({ user }) => {
           lecturersMap[r.lecturerUid].totalPresent += Number(r.actualStudentsPresent || 0);
           lecturersMap[r.lecturerUid].totalRegistered += Number(r.totalRegisteredStudents || 0);
         });
-
-        // Add ratings
-        if (ratingsRes.ratings) {
-          ratingsRes.ratings.forEach(r => {
-            if (lecturersMap[r.lecturerUid]) {
-              lecturersMap[r.lecturerUid].ratings.push(r.rating);
-            }
-          });
-        }
-
-        const list = Object.values(lecturersMap).map(l => ({
-          ...l,
-          courses: l.courses.size,
-          classes: l.classes.size,
-          avgAttendance: l.totalRegistered > 0
-            ? Math.round((l.totalPresent / l.totalRegistered) * 100)
-            : 0,
-          avgRating: l.ratings.length > 0
-            ? (l.ratings.reduce((sum, r) => sum + r, 0) / l.ratings.length).toFixed(1)
-            : '0.0',
-          totalRatings: l.ratings.length,
-        }));
-
-        setLecturers(list);
-        setFiltered(list);
       }
+
+      // Add ratings data
+      if (ratingsRes.ratings) {
+        ratingsRes.ratings.forEach(r => {
+          if (lecturersMap[r.lecturerUid]) {
+            lecturersMap[r.lecturerUid].ratings.push(r.rating);
+          }
+        });
+      }
+
+      const list = Object.values(lecturersMap).map(l => ({
+        ...l,
+        courses: l.courses.size,
+        classes: l.classes.size,
+        avgAttendance: l.totalRegistered > 0
+          ? Math.round((l.totalPresent / l.totalRegistered) * 100)
+          : 0,
+        avgRating: l.ratings.length > 0
+          ? (l.ratings.reduce((sum, r) => sum + r, 0) / l.ratings.length).toFixed(1)
+          : '0.0',
+        totalRatings: l.ratings.length,
+      }));
+
+      setLecturers(list);
+      setFiltered(list);
     } catch (error) {
       console.log('Error fetching lecturers:', error);
     } finally {
